@@ -11,6 +11,7 @@ srcDir        = "src"
 requires "nim >= 2.0.0"
 requires "https://github.com/lbartoletti/NimContracts#main"
 requires "https://github.com/lbartoletti/nimsimd#master"
+requires "malebolgia >= 1.0.0"
 
 task lint, "Fail if nimpretty would reformat a source":
   exec "nim c -r --hints:off -o:build/lint_tool tools/lint.nim"
