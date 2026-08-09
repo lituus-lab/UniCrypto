@@ -4,5 +4,6 @@
 # single `nim c -r` covers everything (used by `nimble test` and coverage).
 {.push warning[UnusedImport]: off.}
 import test_caesar
+import test_cli
 import test_blake3
 {.pop.}
