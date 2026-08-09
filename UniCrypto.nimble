@@ -4,7 +4,7 @@
 
 version       = "0.1.0"
 author        = "lituus-lab"
-description   = "Cryptographic primitives with BLAKE3 hashing (Nim + C-ABI + Python)"
+description   = "Caesar cipher and BLAKE3 hashing (Nim + C-ABI + Python)"
 license       = "Apache-2.0"
 srcDir        = "src"
 
