@@ -1,0 +1,113 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 lituus-lab
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    name: Tag matches .nimble version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # A tag disagreeing with the package version ships artifacts whose
+      # embedded version lies. Refuse before anything is built.
+      - run: |
+          set -eu
+          tag="${GITHUB_REF_NAME#v}"
+          declared_nim=$(grep -m1 '^version' UniCrypto.nimble | cut -d'"' -f2)
+          declared_py=$(grep -m1 '^version' py/pyproject.toml | cut -d'"' -f2)
+          echo "tag=$tag declared_nim=$declared_nim declared_py=$declared_py"
+          test "$tag" = "$declared_nim"
+          test "$tag" = "$declared_py"
+
+  cabi:
+    name: C ABI (${{ matrix.os }})
+    needs: guard
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: '2.2.10'
+      - run: nimble install -y
+      - run: nimble clibStatic
+      - run: nimble clib
+      - name: Package
+        shell: bash
+        run: |
+          set -eu
+          dir="UniCrypto-${GITHUB_REF_NAME}-${{ matrix.os }}"
+          mkdir -p "$dir/include"
+          cp include/UniCrypto.h "$dir/include/"
+          cp libUniCrypto.* "$dir/"
+          cp LICENSE NOTICE "$dir/"
+          tar czf "$dir.tar.gz" "$dir"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cabi-${{ matrix.os }}
+          path: '*.tar.gz'
+
+  wheels:
+    name: Wheel (${{ matrix.os }})
+    needs: guard
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: '2.2.10'
+      - run: nimble install -y
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -U setuptools wheel Cython
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - run: nimble pyLib
+      # `python3` isn't guaranteed on a Windows runner (actions/setup-python
+      # only puts `python.exe` on PATH there); this job's matrix spans
+      # windows-latest.
+      - run: cd py && python setup.py bdist_wheel
+      - name: Repair Wheel
+        shell: bash
+        run: |
+          set -eu
+          case "$RUNNER_OS" in
+            Linux)   pip install auditwheel && auditwheel repair py/dist/*.whl -w dist/ ;;
+            macOS)   pip install delocate   && delocate-wheel py/dist/*.whl -w dist/ ;;
+            Windows) pip install delvewheel && delvewheel repair py/dist/*.whl -w dist/ ;;
+          esac
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ matrix.os }}
+          path: dist/*.whl
+
+  publish:
+    name: Publish
+    needs: [cabi, wheels]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - run: ls -R artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true
