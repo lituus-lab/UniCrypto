@@ -2,22 +2,23 @@
 <!-- Copyright 2026 lituus-lab -->
 # UniCrypto
 
-UniCrypto is a cryptographic library for Nim, with a C ABI, Python bindings,
-and a CLI. This release provides the Caesar cipher and BLAKE3; its public
-surface is designed to accommodate further algorithms as the library grows.
+Two cryptographic primitives: the Caesar cipher, a classical shift cipher,
+and BLAKE3, a modern cryptographic hash function. Both are exposed across
+Nim, a C ABI, a Python binding, and a CLI.
 
 ## What's inside
 
-- **Caesar cipher** (`caesar.nim`) — `caesar_encrypt`/`caesar_decrypt`, a
-  shift cipher over the 26-letter Latin alphabet: case-preserving, any
-  integer shift, non-alphabetic bytes pass through unchanged.
-- **BLAKE3** (`blake3.nim`, `blake3/`) — `blake3`, `blake3Keyed` (MAC),
+- **Caesar cipher** (`cipher/caesar/caesar.nim`) — `caesar_encrypt`/
+  `caesar_decrypt`, a shift cipher over the 26-letter Latin alphabet:
+  case-preserving, any integer shift, non-alphabetic bytes pass through
+  unchanged.
+- **BLAKE3** (`hash/blake3/`) — `blake3`, `blake3Keyed` (MAC),
   `blake3DeriveKey`, the incremental `Hasher` (extended-output/XOF), and
   `blake3Parallel`/`blake3KeyedParallel` for multi-threaded one-shot hashing.
   SIMD kernels (NEON, SSE, AVX2, AVX-512) are dispatched at runtime by CPU
   feature, with a portable scalar fallback.
-- **CLI** (`cli.nim`) — `unicrypto_cli`, exercising both modules over files,
-  piped stdin, and inline text.
+- **CLI** (`bin/unicrypto_cli.nim`) — `unicrypto_cli`, exercising both
+  modules over files, piped stdin, and inline text.
 
 ## The Uni* family
 
@@ -30,24 +31,23 @@ for the family's purpose and philosophy.
 ## Layout
 
 ```text
-src/UniCrypto.nim          umbrella module
-src/UniCrypto/caesar.nim   Nim core (NimContracts)
-src/UniCrypto/blake3.nim   Nim core (public API)
-src/UniCrypto/blake3/      core/hasher/SIMD kernels (NEON/SSE/AVX2/AVX-512)
-src/UniCrypto/c_api.nim    C ABI
-src/UniCrypto/cli.nim      CLI (testable run + thin main)
-include/UniCrypto.h        hand-written C header
-tests/test_caesar.nim        Nim tests
-tests/test_blake3.nim        Nim tests (official BLAKE3 test vectors)
-tests/test_cli.nim           CLI tests
-tests/test_all.nim           aggregator (test + coverage)
-tests/c/                     C ABI test (links the header against the lib)
-examples/                    Nim + C demos
-py/                          Cython binding + pytest
-book/                        nimib book (Caesar + BLAKE3)
-ADRs/                        0001 DAG, 0002 license, 0003 engine&shell, 0004
-                             conventions, 0005 blake3
-.github/workflows/ci.yml     3-OS Nim matrix + C ABI + Python
+src/UniCrypto.nim                    umbrella module
+src/UniCrypto/cipher/caesar/         Caesar cipher (NimContracts) + README
+src/UniCrypto/hash/blake3/           BLAKE3, core/hasher/SIMD kernels + README
+src/UniCrypto/c_api.nim              C ABI
+bin/unicrypto_cli.nim                CLI (testable run + thin main)
+include/UniCrypto.h                  hand-written C header
+tests/test_caesar.nim                Nim tests
+tests/test_blake3.nim                Nim tests (official BLAKE3 test vectors)
+tests/test_cli.nim                   CLI tests
+tests/test_all.nim                   aggregator (test + coverage)
+tests/c/                             C ABI test (links the header against the lib)
+examples/                            Nim + C demos
+py/                                  Cython binding + pytest
+book/                                nimib book (Caesar + BLAKE3)
+ADRs/                                0001 DAG, 0002 license, 0003 engine&shell, 0004
+                                      conventions, 0005 blake3
+.github/workflows/ci.yml             3-OS Nim matrix + C ABI + Python
 ```
 
 ## Build
@@ -63,6 +63,7 @@ nimble example        # Nim demo
 nimble cli            # build unicrypto_cli
 nimble pyTest         # Cython + pytest
 nimble coverage       # gcov + lcov -> coverage/
+nimble docsDeps       # install nimib (needed by book/docs below)
 nimble book           # nimib book -> book/index.html
 nimble docs           # book + API reference -> pages/
 ```
@@ -70,11 +71,11 @@ nimble docs           # book + API reference -> pages/
 The CLI:
 
 ```bash
-./build/unicrypto_cli caesar -e -s 13 "Hello, World!"   # Uryyb, Jbeyq!
-./build/unicrypto_cli caesar -d -s 13 "Uryyb, Jbeyq!"   # Hello, World!
-echo "Hello" | ./build/unicrypto_cli caesar -e -s 3      # Khoor
-./build/unicrypto_cli blake3 -i document.pdf             # 64-char hex digest
-cat file.bin | ./build/unicrypto_cli blake3
+./bin/unicrypto_cli caesar -e -s 13 "Hello, World!"   # Uryyb, Jbeyq!
+./bin/unicrypto_cli caesar -d -s 13 "Uryyb, Jbeyq!"   # Hello, World!
+echo "Hello" | ./bin/unicrypto_cli caesar -e -s 3      # Khoor
+./bin/unicrypto_cli blake3 -i document.pdf             # 64-char hex digest
+cat file.bin | ./bin/unicrypto_cli blake3
 ```
 
 ## Benchmarks
@@ -110,7 +111,7 @@ Reproduce:
 ```bash
 nimble cli
 hyperfine --warmup 3 --runs 15 \
-  --command-name "unicrypto_cli" "./build/unicrypto_cli blake3 -i FILE" \
+  --command-name "unicrypto_cli" "./bin/unicrypto_cli blake3 -i FILE" \
   --command-name "b3sum"         "b3sum FILE"
 ```
 
@@ -140,7 +141,7 @@ the repo is made public.
 ## Provenance & development
 
 Caesar is an original implementation of the classical shift cipher. BLAKE3
-(`src/UniCrypto/blake3/`) is a Nim port of the official reference
+(`src/UniCrypto/hash/blake3/`) is a Nim port of the official reference
 implementation (see `NOTICE`), validated against BLAKE3's own published test
 vectors (`tests/blake3-test-vectors.json`).
 

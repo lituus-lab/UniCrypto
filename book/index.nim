@@ -120,7 +120,7 @@ input:  [chunk 0][chunk 1][chunk 2][chunk 3] ... [chunk N]
 ```
 
 Independent chunks can be hashed **in parallel**. This port's SIMD kernels
-(`src/UniCrypto/blake3/simd_*.nim`) hash chunks in batches of 4 or 8 with
+(`src/UniCrypto/hash/blake3/simd_*.nim`) hash chunks in batches of 4 or 8 with
 NEON on aarch64, or 4, 8, or 16 with SSSE3, AVX2, or AVX-512 on amd64 —
 whichever the CPU actually supports, checked once at startup — with a
 portable scalar fallback everywhere else. For large inputs, `blake3Parallel` goes one step
@@ -162,9 +162,9 @@ nbCode:
 
 nbText: """
 The third mode, **key derivation**, turns some key material into a new,
-independent key for a hardcoded, application-specific context string —
-useful for deriving many purpose-specific keys from one master secret
-without needing a separate secret stored for each purpose:
+independent key for a hardcoded, globally unique, application-specific
+context string — useful for deriving many purpose-specific keys from one
+master secret without needing a separate secret stored for each purpose:
 """
 
 nbCode:
@@ -217,15 +217,15 @@ unwinding across the ABI boundary, which would be undefined behaviour.
 
 ```c
 int ucr_blake3_hash(const uint8_t *input, size_t input_len,
-                    uint8_t output[BLAKE3_OUT_LEN]);
+                    uint8_t output[UCR_BLAKE3_OUT_LEN]);
 int ucr_blake3_hash_xof(const uint8_t *input, size_t input_len,
                         uint8_t *output, size_t output_len);
 int ucr_blake3_keyed_hash(const uint8_t *input, size_t input_len,
-                          const uint8_t key[BLAKE3_KEY_LEN],
-                          uint8_t output[BLAKE3_OUT_LEN]);
+                          const uint8_t key[UCR_BLAKE3_KEY_LEN],
+                          uint8_t output[UCR_BLAKE3_OUT_LEN]);
 int ucr_blake3_derive_key(const char *context, const uint8_t *key_material,
                           size_t key_material_len,
-                          uint8_t output[BLAKE3_OUT_LEN]);
+                          uint8_t output[UCR_BLAKE3_OUT_LEN]);
 ```
 
 The input here is an explicit-length byte buffer (a pointer and a separate
@@ -265,7 +265,11 @@ import unicrypto
 unicrypto.blake3_hash(b"abc")                    # bytes in, bytes out —
                                                    # not str, unlike caesar
 unicrypto.blake3_hash_xof(b"abc", 64)             # any output length
-unicrypto.blake3_keyed_hash(b"message", key)      # key: exactly 32 bytes
+
+key = bytes(range(32))                           # exactly 32 bytes
+unicrypto.blake3_keyed_hash(b"message", key)
+
+material = b"some master secret"
 unicrypto.blake3_derive_key("my app 2026 keys", material)
 ```
 
