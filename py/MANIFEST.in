@@ -1,0 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 lituus-lab
+# setup.py generates _nimsrc immediately before building an sdist.
+recursive-include _nimsrc *
+recursive-exclude unicrypto *.so *.dylib *.dll *.lib
