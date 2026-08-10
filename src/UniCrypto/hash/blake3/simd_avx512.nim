@@ -156,7 +156,7 @@ when defined(amd64):
     ## Compress 16 parent nodes in parallel: parent i has children 2i and
     ## 2i+1 of the 32 child chaining values in ``children``. Only call
     ## when the CPU supports AVX-512F.
-    assert children.len >= 32
+    doAssert children.len >= 32
     # The two child CVs of parent i are contiguous in memory, so one
     # 64-byte load per parent is its full message block.
     var m {.noinit.}: array[16, M512i]

@@ -148,7 +148,7 @@ when defined(amd64):
     ## Compress 4 parent nodes in parallel: parent i has children 2i and
     ## 2i+1 of the 8 child chaining values in ``children``. Only call when
     ## the CPU supports SSSE3.
-    assert children.len >= 8
+    doAssert children.len >= 8
     let r16 = mm_loadu_si128(unsafeAddr Rot16Mask[0])
     let r8 = mm_loadu_si128(unsafeAddr Rot8Mask[0])
 
