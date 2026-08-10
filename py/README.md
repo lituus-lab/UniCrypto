@@ -9,6 +9,17 @@ to grow as further algorithms are added.
 
 ## Install
 
+From PyPI:
+
+```bash
+python3 -m pip install UniCrypto-lituus
+```
+
+The distribution is named `UniCrypto-lituus`; the Python package it provides
+is still imported as `unicrypto`.
+
+To build from source:
+
 ```bash
 nimble clib                                     # build libUniCrypto (Linux/macOS)
 nimble clibMsvc                                 # Windows: MSVC build for CPython
