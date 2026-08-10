@@ -87,8 +87,8 @@ jobs:
         run: |
           set -eu
           case "$RUNNER_OS" in
-            Linux)   pip install auditwheel && auditwheel repair py/dist/*.whl -w dist/ ;;
-            macOS)   pip install delocate   && delocate-wheel py/dist/*.whl -w dist/ ;;
+            Linux)   pip install auditwheel && LD_LIBRARY_PATH="$GITHUB_WORKSPACE" auditwheel repair py/dist/*.whl -w dist/ ;;
+            macOS)   pip install delocate   && DYLD_LIBRARY_PATH="$GITHUB_WORKSPACE" delocate-wheel py/dist/*.whl -w dist/ ;;
             Windows) pip install delvewheel && delvewheel repair py/dist/*.whl -w dist/ ;;
           esac
       - uses: actions/upload-artifact@v4

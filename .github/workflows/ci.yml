@@ -123,12 +123,17 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           pip install auditwheel
-          auditwheel repair py/dist/*.whl -w py/dist/repaired/
+          # auditwheel resolves DT_NEEDED before inspecting package data, so
+          # expose the freshly built shared library explicitly.
+          LD_LIBRARY_PATH="$GITHUB_WORKSPACE" \
+            auditwheel repair py/dist/*.whl -w py/dist/repaired/
       - name: Repair Wheel (macOS)
         if: matrix.os == 'macos-latest'
         run: |
           pip install delocate
-          delocate-wheel py/dist/*.whl -w py/dist/repaired/
+          # delocate also resolves dependencies before inspecting package data.
+          DYLD_LIBRARY_PATH="$GITHUB_WORKSPACE" \
+            delocate-wheel py/dist/*.whl -w py/dist/repaired/
       - name: Repair Wheel (Windows)
         if: matrix.os == 'windows-latest'
         run: |
