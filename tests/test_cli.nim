@@ -4,7 +4,7 @@ import std/unittest
 import std/os
 import std/strutils
 import UniCrypto
-import UniCrypto/cli
+import ../bin/unicrypto_cli
 
 suite "cli dispatch":
   test "no args prints help and exits 1":
@@ -55,6 +55,28 @@ suite "cli dispatch":
     check r.code == 1
     check "requires an argument" in r.text
 
+  test "split-form -s with a negative value is pre-merged and decrypts":
+    let r = run(@["caesar", "-d", "-s", "-3", "Khoor"])
+    check r.ok
+    check r.text == caesar_decrypt("Khoor", -3)
+
+  test "split-form --shift with a negative value is pre-merged":
+    let r = run(@["caesar", "-d", "--shift", "-3", "Khoor"])
+    check r.ok
+    check r.text == caesar_decrypt("Khoor", -3)
+
+  test "split-form -l with a negative value is rejected":
+    let r = run(@["blake3", "-l", "-1", "hi"])
+    check not r.ok
+    check r.code == 1
+    check "length must be" in r.text
+
+  test "two positional text arguments are rejected":
+    let r = run(@["caesar", "-e", "-s", "3", "Hello", "World"])
+    check not r.ok
+    check r.code == 1
+    check "multiple positional text arguments not allowed" in r.text
+
 suite "cli caesar — encrypt/decrypt":
   test "encrypt via args at shift 13":
     let r = run(@["caesar", "-e", "-s", "13", "Hello, World!"])
@@ -91,7 +113,7 @@ suite "cli caesar — encrypt/decrypt":
 
 suite "cli caesar — stdin and files":
   test "bare 'caesar' with no other args reads stdin (regression: " &
-      "initOptParser must never see an empty seq, see cli.nim comment)":
+      "initOptParser must never see an empty seq, see bin/unicrypto_cli.nim comment)":
     let r = run(@["caesar"], "Hello")
     check r.ok
     check r.text == "Uryyb" # default shift 13
@@ -114,10 +136,10 @@ suite "cli caesar — stdin and files":
   test "reads from -i file":
     let tmp = getTempDir() / "uc_cli_in.txt"
     writeFile(tmp, "Hello")
+    defer: removeFile(tmp)
     let r = run(@["caesar", "-e", "-s", "3", "-i", tmp])
     check r.ok
     check r.text == "Khoor"
-    removeFile(tmp)
 
   test "missing -i file exits 1":
     let tmp = getTempDir() / "uc_cli_missing.txt"
@@ -130,15 +152,15 @@ suite "cli caesar — stdin and files":
   test "routes output to -o file path":
     let tmp = getTempDir() / "uc_cli_out.txt"
     removeFile(tmp)
+    defer: removeFile(tmp)
     let r = run(@["caesar", "-e", "-s", "3", "-o", tmp, "Hello"])
     check r.ok
     check r.outFile == tmp
     check r.text == "Khoor"
-    removeFile(tmp)
 
 suite "cli blake3 — hash":
   test "bare 'blake3' with no other args reads stdin (regression: " &
-      "initOptParser must never see an empty seq, see cli.nim comment)":
+      "initOptParser must never see an empty seq, see bin/unicrypto_cli.nim comment)":
     let r = run(@["blake3"], "abc")
     check r.ok
     check r.text == toHex(blake3("abc"))
@@ -176,6 +198,15 @@ suite "cli blake3 — keyed hash and key derivation":
     check r.code == 1
     check "64 hex characters" in r.text
 
+  test "a 64-char key with an embedded non-hex character is rejected":
+    # parseHexInt on its own would silently tolerate a `_` digit separator
+    # here (parseHexInt("1_") == 1), turning a malformed key into the wrong
+    # bytes instead of an error.
+    let r = run(@["blake3", "--key:" & "0".repeat(63) & "_", "message"])
+    check not r.ok
+    check r.code == 1
+    check "64 hex characters" in r.text
+
   test "derive_key with --context matches blake3DeriveKey":
     let context = "context A"
     let material = "material"
@@ -185,7 +216,7 @@ suite "cli blake3 — keyed hash and key derivation":
         material.toOpenArrayByte(0, material.high)))
 
   test "--key and --context are mutually exclusive":
-    let r = run(@["blake3", "--key:" & "00".repeat(64), "--context:x", "hi"])
+    let r = run(@["blake3", "--key:" & "00".repeat(32), "--context:x", "hi"])
     check not r.ok
     check r.code == 1
     check "mutually exclusive" in r.text
@@ -209,15 +240,15 @@ suite "cli blake3 — files":
   test "reads from -i file, exact bytes including a trailing newline":
     let tmp = getTempDir() / "uc_cli_blake3_in.bin"
     writeFile(tmp, "Hello\n")
+    defer: removeFile(tmp)
     let r = run(@["blake3", "-i", tmp])
     check r.ok
     check r.text == toHex(blake3("Hello\n"))
-    removeFile(tmp)
 
 suite "cli blake3 — multi-threaded path for large inputs":
   # Inputs at or above 1 MiB take the hashTreeParallel dispatch in
   # blake3Hex instead of the single-threaded incremental Hasher (see
-  # parallelThreshold in cli.nim). The derive-key case is the one genuinely
+  # parallelThreshold in bin/unicrypto_cli.nim). The derive-key case is the one genuinely
   # new code path here: blake3.nim exposes no blake3DeriveKeyParallel, so
   # nothing else in the test suite exercises hashTreeParallel with
   # DERIVE_KEY_MATERIAL before these tests.
@@ -252,7 +283,7 @@ suite "cli blake3 — multi-threaded path for large inputs":
   test "large file input (memory-mapped path) matches the serial hasher":
     let tmp = getTempDir() / "uc_cli_blake3_large.bin"
     writeFile(tmp, big)
+    defer: removeFile(tmp)
     let r = run(@["blake3", "-i", tmp])
     check r.ok
     check r.text == toHex(blake3(big))
-    removeFile(tmp)

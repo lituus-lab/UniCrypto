@@ -84,8 +84,8 @@ proc tunedThreadPoolSize(): int =
 
 const
   cliExe =
-    when defined(windows): "build/unicrypto_cli.exe"
-    else: "build/unicrypto_cli"
+    when defined(windows): "bin/unicrypto_cli.exe"
+    else: "bin/unicrypto_cli"
 
 task cli, "Build the unicrypto_cli":
   ## --boundChecks:off, not blanket -d:danger: measured back to back at
@@ -104,7 +104,7 @@ task cli, "Build the unicrypto_cli":
   ## default all-core throughput.
   exec "nim c -d:release --boundChecks:off -d:ThreadPoolSize=" &
        $tunedThreadPoolSize() & " --path:src -o:" & cliExe &
-       " src/UniCrypto/cli.nim"
+       " bin/unicrypto_cli.nim"
 
 # Nim takes `-o:` literally and appends no platform extension.
 const

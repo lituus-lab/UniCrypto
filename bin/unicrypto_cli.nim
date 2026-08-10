@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 lituus-lab
-## cli — the `unicrypto_cli` entry. `run` is the testable core: it parses, reads
-## any `-i` file, and returns the result text plus the `-o` path, but performs no
-## stdout/file output. `when isMainModule` wires it to the OS (stdin, stdout,
-## exit code). Ported from the legacy `unicrypto_cli.nim` parseopt logic.
-import ../UniCrypto
-import ../UniCrypto/blake3/core
+## unicrypto_cli — the CLI entry point. `run` is the testable core: it parses,
+## reads any `-i` file, and returns the result text plus the `-o` path, but
+## performs no stdout/file output. `when isMainModule` wires it to the OS
+## (stdin, stdout, exit code).
+import UniCrypto
+import UniCrypto/hash/blake3/core
 import std/[parseopt, strutils, os]
 when compileOption("threads"):
   import std/memfiles
@@ -24,6 +24,8 @@ Options:
   -d, --decrypt       Decrypt mode (caesar only)
   -s N, --shift:N     Shift key (integer, default 13; caesar only)
   -k HEX, --key:HEX   32-byte key as 64 hex chars: keyed hash / MAC (blake3 only)
+                      warning: a key on the command line is visible in shell
+                      history and to other users via process listings (ps)
   -c S, --context:S   Context string: key derivation mode (blake3 only)
   -l N, --length:N    Output length in bytes (default 32; blake3 only)
   -i F, --input:F     Read input from FILE
@@ -53,8 +55,15 @@ proc parseAlgo(s: string): Algo =
 proc parseHexKey(s: string): tuple[ok: bool, key: array[32, byte]] =
   ## Decodes a 64-character hex string into a 32-byte key. `ok` is false on
   ## the wrong length or a non-hex character; `key` is unspecified then.
+  ## Every character is checked against HexDigits first: parseHexInt on its
+  ## own silently tolerates a `0x` prefix, `#`, and `_` digit separators
+  ## (e.g. parseHexInt("1_") == 1), which would let a malformed key parse
+  ## into the wrong bytes instead of being rejected.
   if s.len != 64:
     return (false, default(array[32, byte]))
+  for c in s:
+    if c notin HexDigits:
+      return (false, default(array[32, byte]))
   var key: array[32, byte]
   try:
     for i in 0 ..< 32:
@@ -300,7 +309,9 @@ when isMainModule:
   # block waiting for EOF.
   let stdinText = if isatty(stdin): "" else: stdin.readAll()
   let r = run(commandLineParams(), stdinText)
-  if r.outFile != "":
+  if r.code != 0:
+    stderr.writeLine(r.text)
+  elif r.outFile != "":
     writeFile(r.outFile, r.text & "\n")
   else:
     echo r.text
