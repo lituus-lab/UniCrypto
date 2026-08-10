@@ -3,7 +3,7 @@
 ## Fails if nimpretty would reformat any source. Checks, never rewrites.
 import std/[os, osproc, strformat, strutils]
 
-const Roots = ["src", "tests", "examples", "book"]
+const Roots = ["src", "tests", "examples", "book", "tools", "bin"]
 
 proc sources(): seq[string] =
   for root in Roots:

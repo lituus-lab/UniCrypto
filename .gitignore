@@ -1,8 +1,10 @@
 # build artifacts
 build/
-# Anchored: this is the build output dir, and unanchored `bin/` would also
-# swallow any nested bin/ a subdirectory legitimately tracks.
-/bin/
+# bin/ holds the compiled CLI (unicrypto_cli) plus its Nim source. Ignore the
+# binary output, track the source. git cannot re-include a file under an
+# ignored directory, so ignore `/bin/*` (not `/bin/`) then negate *.nim.
+/bin/*
+!/bin/*.nim
 libUniCrypto.so
 libUniCrypto.so.*
 libUniCrypto.dylib
