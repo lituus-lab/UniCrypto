@@ -4,7 +4,7 @@
 
 - Status: Accepted
 - Date: 2026-07-26
-- Scope: `src/UniCrypto/blake3*`, and every surface built on it
+- Scope: `src/UniCrypto/hash/blake3/`, and every surface built on it
 
 ## Context
 
