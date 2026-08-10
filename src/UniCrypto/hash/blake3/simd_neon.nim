@@ -255,7 +255,7 @@ when defined(arm64) or defined(aarch64):
     ## 2i+1 of the 8 child chaining values in ``children``. A parent block
     ## is the two child CVs concatenated, compressed with the key as input
     ## chaining value, counter 0 and the PARENT flag.
-    assert children.len >= 8
+    doAssert children.len >= 8
     let tbl = vld1q_u8(unsafeAddr Rot8Indices[0])
 
     # m[w] = word w of the 4 parent blocks: words 0..7 come from the left
@@ -305,7 +305,7 @@ when defined(arm64) or defined(aarch64):
     ## and 2i+1 (right) from the 16-element ``children`` slice. Parents 0-3
     ## form the lo half, parents 4-7 the hi half; both halves are compressed
     ## as independent 4-wide NEON passes.
-    assert children.len >= 16
+    doAssert children.len >= 16
     let tbl = vld1q_u8(unsafeAddr Rot8Indices[0])
 
     var mLo {.noinit.}: array[16, uint32x4]

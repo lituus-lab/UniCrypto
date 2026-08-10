@@ -449,7 +449,7 @@ proc treeCvSerial(data: ptr UncheckedArray[byte], len: int, counter: uint64,
       let n = len div CHUNK_LEN
       if (n and (n - 1)) == 0 and n <= maxSubtreeChunks:
         when useX86Kernels:
-          if avx512Available and n >= 32:
+          if avx512Available and n >= avx512MinChunks:
             return hashSubtreeCv(16, toOpenArray(data, 0, len - 1), 0, n,
                                  counter, keyWords, flags)
           if avx2Available and n >= 16:

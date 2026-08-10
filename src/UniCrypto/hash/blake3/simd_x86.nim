@@ -169,7 +169,7 @@ when defined(amd64):
     ## is the two child CVs concatenated, compressed with the key as input
     ## chaining value, counter 0 and the PARENT flag.
     ## Only call when the CPU supports AVX2.
-    assert children.len >= 16
+    doAssert children.len >= 16
     let r16 = rot16Mask()
     let r8 = rot8Mask()
 

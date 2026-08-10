@@ -19,8 +19,8 @@
 ## non-empty-context check is the one contract this module states — see
 ## ADR-0005 for the full rationale.
 
-import ./blake3/core
-import ./blake3/hasher
+import ./core
+import ./hasher
 import contracts
 
 import std/strutils
@@ -69,9 +69,11 @@ when compileOption("threads"):
 
   proc blake3Parallel*(input: openArray[byte],
                        maxThreads = 0): array[32, byte] =
-    ## Multi-threaded one-shot BLAKE3 hash of ``input``, using up to
-    ## ``maxThreads`` threads (0 means one per processor core). Same
-    ## result as ``blake3()``; worth it from a few MiB of input.
+    ## Multi-threaded one-shot BLAKE3 hash of ``input``. ``maxThreads == 1``
+    ## forces the serial path; any other value (including the default
+    ## ``0``) uses the whole malebolgia thread pool, sized at compile time
+    ## via ``-d:ThreadPoolSize`` — this is not a dial-able thread count.
+    ## Same result as ``blake3()``; worth it from a few MiB of input.
     hashTreeParallel(input, IV, 0, result, maxThreads)
 
   proc blake3KeyedParallel*(input: openArray[byte], key: array[32, byte],
