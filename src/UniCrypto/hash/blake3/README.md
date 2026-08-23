@@ -95,5 +95,6 @@ hyperfine --warmup 3 --runs 10 \
 ### References
 
 - [BLAKE3](https://en.wikipedia.org/wiki/BLAKE_(hash_function)#BLAKE3) — Wikipedia.
-- [BLAKE3 specification and reference implementation](https://github.com/BLAKE3-team/BLAKE3) — the official repository.
+- [BLAKE3 specification and reference implementation](https://github.com/BLAKE3-team/BLAKE3)
+  — the official repository.
 - [Merkle tree](https://en.wikipedia.org/wiki/Merkle_tree) — Wikipedia.

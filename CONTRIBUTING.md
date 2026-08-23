@@ -20,7 +20,7 @@ Commits without a `Signed-off-by` trailer are not accepted.
 
 Commit subjects and the PR title follow [Conventional Commits 1.0](https://www.conventionalcommits.org/):
 
-```
+```text
 <type>(scope)!: <description>
 ```
 
@@ -28,7 +28,7 @@ Commit subjects and the PR title follow [Conventional Commits 1.0](https://www.c
 `build`, `ci`, `chore`, `revert`, `bump`. `scope` and `!` (breaking change) are
 optional. A space separates the colon from the description.
 
-```
+```text
 feat: add caesar C ABI
 fix(c_api): reject a nil pointer instead of crashing
 docs: clarify the BLAKE3 avalanche example
