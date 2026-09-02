@@ -12,7 +12,7 @@ to grow as further algorithms are added.
 From PyPI:
 
 ```bash
-python3 -m pip install UniCrypto-lituus
+python3 -m pip install lituus-unicrypto
 ```
 
 The distribution is named `UniCrypto-lituus`; the Python package it provides
