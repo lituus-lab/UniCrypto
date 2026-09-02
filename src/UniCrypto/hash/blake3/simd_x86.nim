@@ -12,16 +12,7 @@
 # dispatch in hasher.nim, using nimsimd/runtimecheck).
 
 when defined(amd64):
-  # -mstackrealign on Windows: the x64 ABI there guarantees a 16-byte stack,
-  # and gcc, told it may use AVX2, spills these 32-byte locals as if it had 32.
-  # hash8Avx2 died with SIGSEGV on a malebolgia worker thread there while
-  # passing on Linux and macOS, whose ABI aligns to 32 already. The flag makes
-  # each function realign its own frame; it costs a couple of instructions in
-  # the prologue and nothing elsewhere.
-  when defined(windows):
-    {.localPassC: "-mavx2 -mstackrealign".}
-  else:
-    {.localPassC: "-mavx2".}
+  {.localPassC: "-mavx2".}
 
   import nimsimd/avx2
   import ./core
