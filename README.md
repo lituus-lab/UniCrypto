@@ -16,7 +16,9 @@ Nim, a C ABI, a Python binding, and a CLI.
   `blake3DeriveKey`, the incremental `Hasher` (extended-output/XOF), and
   `blake3Parallel`/`blake3KeyedParallel` for multi-threaded one-shot hashing.
   SIMD kernels (NEON, SSE, AVX2, AVX-512) are dispatched at runtime by CPU
-  feature, with a portable scalar fallback.
+  feature, with a portable scalar fallback. On Windows the dispatch stops at
+  the 4-wide SSSE3 kernel: gcc spills the wider kernels' 32-byte locals with an
+  aligned store to a stack slot that is not 32-byte aligned, and it faults.
 - **CLI** (`bin/unicrypto_cli.nim`) — `unicrypto_cli`, exercising both
   modules over files, piped stdin, and inline text.
 

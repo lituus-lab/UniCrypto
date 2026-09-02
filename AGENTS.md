@@ -32,6 +32,10 @@ CI: 3-OS Nim matrix + C ABI + Python. `coverage` is Linux-only (Apple's
 - C ABI: hand-written `include/UniCrypto.h` kept in sync with
   `src/UniCrypto/c_api.nim`; `tests/c` links the header against the lib.
   Built `--app:staticlib`/`--app:lib --noMain --mm:arc -d:release`.
+- A change to `c_api.nim` is verified by `ctest`, `pyTest` and, where there
+  is one, `wasmTest`: three linkages, three runtime bootstraps. A green
+  `ctest` alone proved nothing the day the shared build lost its
+  initializer and every registry answered with the sentinel.
 - C symbols `ucr_*` (prefix `ucr_`); lib `libUniCrypto`; header `UniCrypto.h`.
 - `book/index.nim` is nimib: its code blocks are compiled and run at docs build,
   so prose that outlives its API breaks the build. `py/notebooks/quickstart.ipynb`
