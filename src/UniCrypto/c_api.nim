@@ -18,12 +18,15 @@ func boundedShift(shift: cint): int =
 
 # Unmangled C symbols, C calling convention, exported from the shared lib.
 
-# A shared library runs NimMain from DllMain (Windows) or an ELF constructor;
-# a static one has neither, so nothing initializes the Nim runtime. The first
-# entry point then enters Nim code whose globals were never set up and the
-# process faults. The static-library tasks pass -d:staticNoAutoInit; shared
-# builds must not, or NimMain runs twice.
-when defined(staticNoAutoInit):
+# --noMain suppresses the generated entry point and with it every auto-init
+# hook: neither the static nor the shared build emits a DllMain or an ELF
+# constructor, so nothing initializes the Nim runtime. The first entry point
+# then enters Nim code whose globals were never set up. The shared build was
+# assumed to be covered by a loader hook it does not have -- its registries
+# stayed empty and the contrast entry answered nan. Every --noMain task passes
+# -d:noAutoInit; an ordinary executable linking this module must not, since its
+# own main already ran NimMain.
+when defined(noAutoInit):
   # A once primitive, not a plain flag: two threads reaching an entry point
   # together would both see the flag unset, both call NimMain, and the second
   # would enter Nim code the first had not finished initializing. The platform
