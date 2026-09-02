@@ -32,14 +32,24 @@ when useX86Kernels:
   let ssse3Available = checkInstructionSets({SSSE3})
   # -d:blake3ForceSse (test only) pins the dispatch to the 4-wide SSSE3
   # kernel so the fallback path can be exercised on AVX2/AVX-512 hardware.
+  # Not on Windows. gcc spills this kernel's 32-byte locals with `vmovdqa` to
+  # a stack slot that is only 16-byte aligned, and the store faults -- observed
+  # under gdb as `vmovdqa %ymm0,0x90(%rsp)` with rsp 32-aligned, so the offset
+  # itself is wrong. Reproduced on Windows 11 with the CI runner's own gcc
+  # 15.2.0, on the main thread as much as on a worker, in every build that is
+  # not -d:release. -mstackrealign, -mpreferred-stack-boundary=5,
+  # -mincoming-stack-boundary=3 and -O2 on the module were each tried and each
+  # still faulted. The 4-wide SSSE3 kernel is correct there by construction:
+  # its 16-byte stores are exactly what the Windows x64 ABI guarantees.
   let avx2Available =
-    checkInstructionSets({AVX2}) and not defined(blake3ForceSse)
+    checkInstructionSets({AVX2}) and not defined(blake3ForceSse) and
+    not defined(windows)
   # AVX-512 has not been validated on real hardware yet (see
   # simd_avx512.nim), so it stays opt-in behind -d:blake3Avx512 even when
   # the CPU reports AVX512F support.
   let avx512Available =
     defined(blake3Avx512) and checkInstructionSets({AVX512F}) and
-    not defined(blake3ForceSse)
+    not defined(blake3ForceSse) and not defined(windows)
 
   const avx512MinChunks {.intdefine.} = 32
     ## The 16-wide AVX-512 kernel is only chosen once at least this many whole
