@@ -72,6 +72,16 @@ jobs:
       - uses: jiro4989/setup-nim-action@v2
         with:
           nim-version: '2.2.10'
+      # The C compiler behind Nim, named in the log. The AVX2 BLAKE3 kernel
+      # faults here and nowhere else -- not on Linux with the same source and
+      # the same instructions, not on a Windows 11 machine with gcc 14.2.0
+      # running this very test file -- so which build of gcc this runner
+      # supplies is the one thing the traceback does not say. Nim's Windows
+      # distribution bundles none, so it comes from the image.
+      - name: Which C compiler
+        run: |
+          which gcc || true
+          gcc --version || true
       - run: nimble install -y
       - name: Build the failure gate
         run: |
